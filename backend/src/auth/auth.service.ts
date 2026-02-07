@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { EmailService } from '../email/email.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -48,7 +49,7 @@ export class AuthService {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otp = crypto.randomInt(100000, 999999).toString();
         const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
         const newUser = await this.usersService.create({
@@ -59,7 +60,12 @@ export class AuthService {
             otpExpires,
         });
 
-        await this.emailService.sendOtp(email, otp);
+        try {
+            await this.emailService.sendOtp(email, otp);
+        } catch (error) {
+            console.error('Failed to send email:', error);
+            // Don't fail registration if email fails (for dev purposes or invalid creds)
+        }
 
         return {
             message: 'User registered successfully. Please verify OTP.',

@@ -5,9 +5,11 @@ import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cartStore';
+import SupplyNavbar from '@/components/supply/SupplyNavbar';
+import { Separator } from '@/components/ui/separator';
 
 interface Product {
-    _id: string;
+    id: string;
     name: string;
     image: string;
     description: string;
@@ -47,7 +49,7 @@ export default function ProductPage() {
     const handleAddToCart = () => {
         if (product) {
             addToCart({
-                product: product._id,
+                product: product.id,
                 name: product.name,
                 image: product.image,
                 price: product.price,
@@ -58,67 +60,94 @@ export default function ProductPage() {
         }
     };
 
-    if (loading) return <div className="text-center py-10">Loading...</div>;
-    if (!product) return <div className="text-center py-10">Product not found</div>;
+    if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-white">Loading...</div>;
+    if (!product) return <div className="min-h-screen bg-black flex items-center justify-center text-white">Product not found</div>;
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-                &larr; Go Back
-            </Button>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                    <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-auto rounded-lg shadow-md object-cover"
-                    />
-                </div>
-                <div className="space-y-4">
-                    <h1 className="text-3xl font-bold">{product.name}</h1>
-                    <div className="flex items-center space-x-2">
-                        <span className="text-yellow-500 text-xl">★</span>
-                        <span className="text-gray-600">
-                            {product.rating} ({product.numReviews} reviews)
-                        </span>
-                    </div>
-                    <p className="text-2xl font-semibold">${product.price}</p>
-                    <p className="text-gray-700">{product.description}</p>
+        <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black">
+            <SupplyNavbar />
 
-                    <div className="border-t border-b py-4 my-4">
-                        <div className="flex justify-between items-center mb-2">
-                            <span className="font-medium">Status:</span>
-                            <span className={product.countInStock > 0 ? 'text-green-600' : 'text-red-600'}>
-                                {product.countInStock > 0 ? 'In Stock' : 'Out of Stock'}
+            <div className="max-w-[1400px] mx-auto pt-32 px-6 pb-20">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24">
+
+                    {/* Left: Images (Sticky-ish implementation or simple stack for now) */}
+                    <div className="space-y-4">
+                        <div className="aspect-square bg-[#111] w-full flex items-center justify-center p-12">
+                            <img
+                                src={product.image}
+                                alt={product.name}
+                                className="w-full h-full object-contain"
+                            />
+                        </div>
+                        {/* Placeholder for more images if they existed */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="aspect-square bg-[#111] opacity-50"></div>
+                            <div className="aspect-square bg-[#111] opacity-50"></div>
+                        </div>
+                    </div>
+
+                    {/* Right: Details (Sticky) */}
+                    <div className="md:sticky md:top-32 h-fit space-y-8">
+                        <div>
+                            <span className="text-green-500 font-mono text-sm uppercase tracking-widest mb-2 block">
+                                {product.brand || 'Authora'}
                             </span>
+                            <h1 className="text-4xl md:text-5xl font-bold tracking-tighter mb-4 leading-tight">
+                                {product.name}
+                            </h1>
+                            <div className="text-2xl font-mono">
+                                ${product.price.toFixed(2)}
+                            </div>
                         </div>
 
-                        {product.countInStock > 0 && (
-                            <div className="flex justify-between items-center">
-                                <span className="font-medium">Qty:</span>
-                                <select
-                                    value={qty}
-                                    onChange={(e) => setQty(Number(e.target.value))}
-                                    className="border rounded p-1"
-                                >
-                                    {[...Array(product.countInStock).keys()].map((x) => (
-                                        <option key={x + 1} value={x + 1}>
-                                            {x + 1}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-                    </div>
+                        <Separator className="bg-white/10" />
 
-                    <Button
-                        onClick={handleAddToCart}
-                        disabled={product.countInStock === 0}
-                        className="w-full"
-                        size="lg"
-                    >
-                        {product.countInStock > 0 ? 'Add to Cart' : 'Out of Stock'}
-                    </Button>
+                        <div className="prose prose-invert max-w-none text-gray-400">
+                            <p>{product.description}</p>
+                            <ul className="list-disc pl-4 space-y-1 mt-4 font-mono text-sm">
+                                <li>Premium build quality</li>
+                                <li>Industry standard reliability</li>
+                                <li>2-year warranty included</li>
+                            </ul>
+                        </div>
+
+                        <div className="bg-[#111] p-6 border border-white/10 rounded-sm">
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-sm font-mono text-gray-400">STATUS</span>
+                                <span className={product.countInStock > 0 ? "text-green-500 font-bold" : "text-red-500 font-bold"}>
+                                    {product.countInStock > 0 ? 'IN STOCK' : 'SOLD OUT'}
+                                </span>
+                            </div>
+
+                            {product.countInStock > 0 && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-4">
+                                        <label className="text-sm font-mono text-gray-400">QUANTITY</label>
+                                        <select
+                                            value={qty}
+                                            onChange={(e) => setQty(Number(e.target.value))}
+                                            className="bg-black border border-white/20 text-white rounded-none px-3 py-2 outline-none focus:border-white"
+                                        >
+                                            {[...Array(Math.min(product.countInStock, 10)).keys()].map(x => (
+                                                <option key={x + 1} value={x + 1}>{x + 1}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <Button
+                                        onClick={handleAddToCart}
+                                        className="w-full h-14 bg-white text-black hover:bg-gray-200 rounded-full text-lg font-bold tracking-tight"
+                                    >
+                                        Add to Cart - ${(product.price * qty).toFixed(2)}
+                                    </Button>
+
+                                    <p className="text-center text-xs text-gray-500 font-mono mt-2">
+                                        Free shipping on standard orders.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
