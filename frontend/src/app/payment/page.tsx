@@ -3,14 +3,16 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { useCartStore } from '@/store/cartStore';
 
 export default function PaymentPage() {
     const router = useRouter();
-    const [paymentMethod, setPaymentMethod] = useState('PayPal');
+    const { savePaymentMethod, paymentMethod: storedPaymentMethod } = useCartStore((state: any) => state);
+    const [paymentMethod, setPaymentMethod] = useState(storedPaymentMethod || 'PayPal');
 
     const onSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        localStorage.setItem('paymentMethod', paymentMethod);
+        savePaymentMethod(paymentMethod);
         router.push('/placeorder');
     };
 

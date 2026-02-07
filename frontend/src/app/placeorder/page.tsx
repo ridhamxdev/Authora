@@ -9,26 +9,17 @@ import api from '@/lib/api';
 
 export default function PlaceOrderPage() {
     const router = useRouter();
-    const { cartItems, clearCart } = useCartStore((state: any) => state);
-    const [shippingAddress, setShippingAddress] = useState<any>(null);
-    const [paymentMethod, setPaymentMethod] = useState('');
+    const { cartItems, clearCart, shippingAddress, paymentMethod } = useCartStore((state) => state);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
-        const address = localStorage.getItem('shippingAddress');
-        const payment = localStorage.getItem('paymentMethod');
-        if (!address) {
+        if (!shippingAddress.address) {
             router.push('/shipping');
-        } else {
-            setShippingAddress(JSON.parse(address));
-        }
-        if (!payment) {
+        } else if (!paymentMethod) {
             router.push('/payment');
-        } else {
-            setPaymentMethod(payment);
         }
-    }, [router]);
+    }, [router, shippingAddress, paymentMethod]);
 
     const itemsPrice = cartItems.reduce((acc: number, item: any) => acc + item.qty * item.price, 0);
     const shippingPrice = itemsPrice > 100 ? 0 : 10;

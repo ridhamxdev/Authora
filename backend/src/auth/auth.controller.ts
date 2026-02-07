@@ -1,18 +1,28 @@
-import { Controller, Post, Body, BadRequestException, UseGuards, Request, Get, Put } from '@nestjs/common';
+import { Controller, Post, Body, BadRequestException, UseGuards, Request, Get, Put, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
+import type { Response } from 'express';
 
 @Controller('users')
 export class AuthController {
     constructor(private authService: AuthService) { }
 
     @Post('login')
-    async login(@Body() body: any) {
+    async login(@Body() body: any, @Res({ passthrough: true }) res: Response) {
         const user = await this.authService.validateUser(body.email, body.password);
         if (!user) {
             throw new BadRequestException('Invalid credentials');
         }
-        return this.authService.login(user);
+        const { access_token, user: userData } = await this.authService.login(user);
+
+        res.cookie('Authentication', access_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 24 * 60 * 60 * 1000 // 1 day
+        });
+
+        return userData;
     }
 
     @Post() // Matches POST /users (Register)
@@ -21,8 +31,21 @@ export class AuthController {
     }
 
     @Post('verify-otp')
-    async verifyOtp(@Body() body: any) {
-        return this.authService.verifyOtp(body.email, body.otp);
+    async verifyOtp(@Body() body: any, @Res({ passthrough: true }) res: Response) {
+        const result = await this.authService.verifyOtp(body.email, body.otp);
+        res.cookie('Authentication', result.access_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 24 * 60 * 60 * 1000 // 1 day
+        });
+        return result.user;
+    }
+
+    @Post('logout')
+    async logout(@Res({ passthrough: true }) res: Response) {
+        res.clearCookie('Authentication');
+        return { message: 'Logged out successfully' };
     }
 
     @UseGuards(AuthGuard('jwt'))
@@ -34,18 +57,6 @@ export class AuthController {
     @UseGuards(AuthGuard('jwt'))
     @Put('profile')
     async updateProfile(@Request() req: any, @Body() body: any) {
-        // Basic validation or use DTO
-        if (body.password) {
-            // Passwords should be hashed in service or schema hooks.
-            // Mongoose schema pre-save hook handles hashing if 'password' field is modified.
-            // So assuming usersService.update triggers save or we use save().
-            // findByIdAndUpdate usually DOES NOT trigger pre-save hooks.
-            // We need to fetch and save.
-            // But I implemented update using findOneAndUpdate in UsersService.
-            // I should change UsersService.update to fetch and save, OR manually hash password here.
-            // Re-implementing update in UsersService is better.
-        }
-        // For now, let's assume body doesn't contain password or we fix UsersService.
         const user = await this.authService.updateProfile(req.user._id, body);
         return user;
     }

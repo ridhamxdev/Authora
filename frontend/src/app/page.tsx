@@ -27,12 +27,16 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Client-side check for token
-    const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const fetchUser = async () => {
+      try {
+        const { data } = await api.get('/users/profile');
+        setUser(data);
+      } catch (err) {
+        // Not logged in or expired
+        setUser(null);
+      }
+    };
+    fetchUser();
 
     const fetchProducts = async () => {
       try {
@@ -48,11 +52,15 @@ export default function Home() {
     fetchProducts();
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-    router.push('/login');
+  const logoutHandler = async () => {
+    try {
+      await api.post('/users/logout');
+      // localStorage.removeItem('token');
+      // localStorage.removeItem('user');
+      router.push('/login');
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -64,7 +72,7 @@ export default function Home() {
             <div className="flex gap-4 items-center">
               <span className="text-sm font-medium">Welcome, {user.name}</span>
               <Button onClick={() => router.push('/profile')} variant="ghost" size="sm">Profile</Button>
-              <Button onClick={logout} variant="secondary" size="sm">Logout</Button>
+              <Button onClick={logoutHandler} variant="secondary" size="sm">Logout</Button>
             </div>
           ) : (
             <div className="flex gap-4">

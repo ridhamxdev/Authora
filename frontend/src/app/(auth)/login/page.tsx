@@ -28,8 +28,9 @@ export default function LoginPage() {
         try {
             setError('');
             const response = await api.post('/users/login', data);
-            localStorage.setItem('token', response.data.access_token);
-            localStorage.setItem('user', JSON.stringify(response.data.user));
+            // localStorage.setItem('token', response.data.access_token);
+            // localStorage.setItem('user', JSON.stringify(response.data.user));
+            // Auth handled via HttpOnly Cookies
             router.push('/');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Login failed');

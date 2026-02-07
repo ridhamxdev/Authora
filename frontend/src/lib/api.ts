@@ -5,16 +5,10 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    withCredentials: true, // Enable cookies
 });
 
-api.interceptors.request.use((config) => {
-    if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-    }
-    return config;
-});
+// Interceptor removed as cookies are handled automatically by browser
+// api.interceptors.request.use((config) => { ... });
 
 export default api;

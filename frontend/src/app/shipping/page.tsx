@@ -20,13 +20,15 @@ type ShippingFormData = z.infer<typeof shippingSchema>;
 
 export default function ShippingPage() {
     const router = useRouter();
-    // In a real app, load from store if saved
+    const { saveShippingAddress, shippingAddress } = useCartStore((state) => state);
+
     const { register, handleSubmit, formState: { errors } } = useForm<ShippingFormData>({
         resolver: zodResolver(shippingSchema),
+        defaultValues: shippingAddress || {},
     });
 
     const onSubmit = (data: ShippingFormData) => {
-        localStorage.setItem('shippingAddress', JSON.stringify(data));
+        saveShippingAddress(data);
         router.push('/payment');
     };
 

@@ -9,27 +9,26 @@ export class AuthService {
     constructor(
         private usersService: UsersService,
         private jwtService: JwtService,
-        private emailService: EmailService,
+        private emailService: EmailService
     ) { }
 
     async validateUser(email: string, pass: string): Promise<any> {
         const user = await this.usersService.findOneByEmail(email);
-        // Use bcrypt.compare to check password against hashed one
-        // We already have matchPassword method on schema but accessing it requires casting to UserDocument
-        if (user && (await bcrypt.compare(pass, user.password))) {
-            // Return user without password
-            const { password, ...result } = user.toObject();
+        if (user && await bcrypt.compare(pass, user.password)) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { password, ...result } = user;
             return result;
         }
         return null;
     }
 
     async login(user: any) {
-        const payload = { email: user.email, sub: user._id, name: user.name };
+        const payload = { email: user.email, sub: user.id, name: user.name };
         return {
             access_token: this.jwtService.sign(payload),
             user: {
-                _id: user._id,
+                _id: user.id, // Keep _id for frontend compatibility or migrate frontend to use id
+                id: user.id,
                 name: user.name,
                 email: user.email,
                 isAdmin: user.isAdmin,
@@ -38,20 +37,24 @@ export class AuthService {
         };
     }
 
-    async register(registerDto: any) {
-        const { name, email, password } = registerDto;
+    async register(registrationData: any) {
+        const { name, email, password } = registrationData;
+
         const existingUser = await this.usersService.findOneByEmail(email);
         if (existingUser) {
             throw new BadRequestException('User already exists');
         }
 
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
         const newUser = await this.usersService.create({
             name,
             email,
-            password,
+            password: hashedPassword,
             otp,
             otpExpires,
         });
@@ -60,7 +63,7 @@ export class AuthService {
 
         return {
             message: 'User registered successfully. Please verify OTP.',
-            userId: newUser._id,
+            userId: newUser.id,
         };
     }
 
@@ -72,24 +75,25 @@ export class AuthService {
         if (user.isVerified) {
             throw new BadRequestException('User already verified');
         }
-        if (user.otp !== otp) { // In real app, hash OTP or use proper TOTP
+        if (user.otp !== otp) {
             throw new BadRequestException('Invalid OTP');
         }
-        if (user.otpExpires < new Date()) {
+        if (user.otpExpires && user.otpExpires < new Date()) {
             throw new BadRequestException('OTP expired');
         }
 
-        await this.usersService.update(user._id.toString(), {
+        await this.usersService.update(user.id, {
             isVerified: true,
             otp: null,
-            otpExpires: null,
+            otpExpires: null, // Prisma handles nullable fields
         });
 
-        const payload = { email: user.email, sub: user._id, name: user.name };
+        const payload = { email: user.email, sub: user.id, name: user.name };
         return {
             access_token: this.jwtService.sign(payload),
             user: {
-                _id: user._id,
+                _id: user.id,
+                id: user.id,
                 name: user.name,
                 email: user.email,
                 isAdmin: user.isAdmin,
@@ -104,10 +108,9 @@ export class AuthService {
             if (!user) {
                 throw new BadRequestException('User not found');
             }
-            user.name = updateData.name || user.name;
-            user.email = updateData.email || user.email;
-            user.password = updateData.password; // Hook hashes this
-            return user.save();
+
+            const salt = await bcrypt.genSalt(10);
+            updateData.password = await bcrypt.hash(updateData.password, salt);
         }
         return this.usersService.update(userId, updateData);
     }

@@ -1,47 +1,77 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Order, OrderDocument } from './schemas/order.schema';
+import { PrismaService } from '../prisma/prisma.service';
+import { Order } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
-    constructor(@InjectModel(Order.name) private orderModel: Model<OrderDocument>) { }
+    constructor(private prisma: PrismaService) { }
 
-    async create(createOrderDto: any): Promise<OrderDocument> {
+    async create(createOrderDto: any): Promise<Order> {
         const {
             orderItems,
             shippingAddress,
             paymentMethod,
-            itemsPrice, // Calculate on backend ideally, but trusting frontend for now or validating
+            itemsPrice,
             taxPrice,
             shippingPrice,
             totalPrice,
             user,
         } = createOrderDto;
 
-        const order = new this.orderModel({
-            orderItems,
-            user: user,
-            shippingAddress,
-            paymentMethod,
-            taxPrice,
-            shippingPrice,
-            totalPrice,
-        });
+        // Prisma requires a different structure for nested creates if we want to create OrderItems conveniently
+        // Mapping orderItems to Prisma's expected format
+        const formattedOrderItems = orderItems.map((item: any) => ({
+            name: item.name,
+            qty: item.qty,
+            image: item.image,
+            price: item.price,
+            productId: item.product, // Assuming item.product is the ID from frontend
+        }));
 
-        const createdOrder = await order.save();
-        return createdOrder;
+        return this.prisma.order.create({
+            data: {
+                userId: user, // userId passed from controller
+                orderItems: {
+                    create: formattedOrderItems,
+                },
+                shippingAddress: shippingAddress, // Passed as JSON object, Prisma handles JSON
+                paymentMethod,
+                taxPrice,
+                shippingPrice,
+                totalPrice,
+            },
+            include: {
+                orderItems: true,
+            },
+        });
     }
 
-    async findById(id: string): Promise<OrderDocument> {
-        const order = await this.orderModel.findById(id).populate('user', 'name email').exec();
+    async findById(id: string): Promise<Order | null> {
+        const order = await this.prisma.order.findUnique({
+            where: { id },
+            include: {
+                user: {
+                    select: {
+                        name: true,
+                        email: true,
+                    },
+                },
+                orderItems: true,
+            },
+        });
+
         if (!order) {
             throw new NotFoundException('Order not found');
         }
         return order;
     }
 
-    async findMyOrders(userId: string): Promise<OrderDocument[]> {
-        return this.orderModel.find({ user: userId } as any).exec();
+    async findMyOrders(userId: string): Promise<Order[]> {
+        return this.prisma.order.findMany({
+            where: { userId },
+            include: {
+                orderItems: true,
+            },
+        });
     }
 }

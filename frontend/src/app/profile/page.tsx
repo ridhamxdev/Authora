@@ -37,7 +37,7 @@ export default function ProfilePage() {
             const res = await api.put('/users/profile', data);
             setUser(res.data);
             setMessage('Profile updated successfully');
-            localStorage.setItem('user', JSON.stringify(res.data));
+            // localStorage.setItem('user', JSON.stringify(res.data));
         } catch (err: any) {
             setMessage(err.response?.data?.message || 'Update failed');
         }
