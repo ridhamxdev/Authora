@@ -4,9 +4,26 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import api from '@/lib/api';
+import Image from 'next/image';
+
+interface Product {
+  _id: string;
+  name: string;
+  image: string;
+  description: string;
+  brand: string;
+  category: string;
+  price: number;
+  countInStock: number;
+  rating: number;
+  numReviews: number;
+}
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -16,6 +33,19 @@ export default function Home() {
     if (token && storedUser) {
       setUser(JSON.parse(storedUser));
     }
+
+    const fetchProducts = async () => {
+      try {
+        const { data } = await api.get('/products');
+        setProducts(data);
+      } catch (err) {
+        console.error('Failed to fetch products', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
   }, []);
 
   const logout = () => {
@@ -26,37 +56,57 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Authora E-commerce
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
+    <main className="flex min-h-screen flex-col items-center p-8 bg-gray-50 text-black">
+      <header className="w-full max-w-7xl flex items-center justify-between py-6 mb-8 border-b border-gray-200">
+        <h1 className="text-2xl font-bold font-mono">Authora</h1>
+        <div>
           {user ? (
             <div className="flex gap-4 items-center">
-              <span>Welcome, {user.name}</span>
-              <Button onClick={logout} variant="secondary">Logout</Button>
+              <span className="text-sm font-medium">Welcome, {user.name}</span>
+              <Button onClick={() => router.push('/profile')} variant="ghost" size="sm">Profile</Button>
+              <Button onClick={logout} variant="secondary" size="sm">Logout</Button>
             </div>
           ) : (
             <div className="flex gap-4">
               <Link href="/login">
-                <Button>Login</Button>
+                <Button variant="ghost" size="sm">Login</Button>
               </Link>
               <Link href="/register">
-                <Button variant="outline">Register</Button>
+                <Button size="sm">Register</Button>
               </Link>
             </div>
           )}
         </div>
-      </div>
+      </header>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <h1 className="text-4xl font-bold">Welcome to Authora</h1>
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        {/* Product grid placeholder */}
-      </div>
+      <section className="w-full max-w-7xl">
+        <h2 className="text-3xl font-bold mb-8">Latest Products</h2>
+        {loading ? (
+          <p>Loading products...</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            {products.map((product) => (
+              <div key={product._id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden flex flex-col">
+                <div className="relative h-48 w-full bg-gray-100">
+                  {/* Use optimized image if you have configured domains, using standard img in dev for simplicity if external */}
+                  <img src={product.image} alt={product.name} className="object-cover h-full w-full" />
+                </div>
+                <div className="p-4 flex-1 flex flex-col">
+                  <Link href={`/products/${product._id}`} className="hover:underline">
+                    <h3 className="text-lg font-semibold mb-2 line-clamp-2" title={product.name}>{product.name}</h3>
+                  </Link>
+                  <div className="flex items-center mb-2">
+                    <span className="text-yellow-500 mr-1">★</span>
+                    <span className="text-sm text-gray-600">{product.rating} ({product.numReviews} review(s))</span>
+                  </div>
+                  <p className="text-xl font-bold mt-auto">${product.price}</p>
+                  <Button className="mt-4 w-full" variant="secondary">View Details</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </main>
   );
 }
