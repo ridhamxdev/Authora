@@ -1,18 +1,18 @@
 'use client';
 
-import SupplyNavbar from '@/components/supply/SupplyNavbar';
-import SupplyHero from '@/components/supply/SupplyHero';
-import SupplyGrid from '@/components/supply/SupplyGrid';
+import AuthoraNavbar from '@/components/authora/AuthoraNavbar';
+import AuthoraHero from '@/components/authora/AuthoraHero';
+import AuthoraGrid from '@/components/authora/AuthoraGrid';
 import { Button } from '@/components/ui/button';
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black">
-      <SupplyNavbar />
-
-      <main>
-        <SupplyHero />
-        <SupplyGrid />
+      <AuthoraNavbar />
+      {/* Main Content */}
+      <main className="pt-16">
+        <AuthoraHero />
+        <AuthoraGrid />
 
         {/* Story / About Section */}
         <section className="py-32 px-6 bg-[#050505]">

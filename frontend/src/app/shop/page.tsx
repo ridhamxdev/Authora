@@ -2,8 +2,8 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import api from '@/lib/api';
-import SupplyNavbar from '@/components/supply/SupplyNavbar';
-import SupplyProductCard from '@/components/supply/SupplyProductCard';
+import AuthoraNavbar from '@/components/authora/AuthoraNavbar';
+import AuthoraProductCard from '@/components/authora/AuthoraProductCard';
 import { useSearchParams } from 'next/navigation';
 
 interface Product {
@@ -59,7 +59,7 @@ function ShopContent() {
 
     return (
         <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black">
-            <SupplyNavbar />
+            <AuthoraNavbar />
 
             <div className="pt-32 pb-20 px-6 max-w-[1600px] mx-auto">
                 <div className="flex flex-col md:flex-row justify-between items-end mb-16 border-b border-white/10 pb-8">
@@ -97,7 +97,7 @@ function ShopContent() {
                             </div>
                         ) : (
                             products.map((product) => (
-                                <SupplyProductCard key={product.id} product={product} />
+                                <AuthoraProductCard key={product.id} product={product} />
                             ))
                         )}
                     </div>

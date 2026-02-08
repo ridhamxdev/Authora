@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cartStore';
-import SupplyNavbar from '@/components/supply/SupplyNavbar';
+import AuthoraNavbar from '@/components/authora/AuthoraNavbar';
 import { Separator } from '@/components/ui/separator';
 
 interface Product {
@@ -65,7 +65,7 @@ export default function ProductPage() {
 
     return (
         <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black">
-            <SupplyNavbar />
+            <AuthoraNavbar />
 
             <div className="max-w-[1400px] mx-auto pt-32 px-6 pb-20">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24">

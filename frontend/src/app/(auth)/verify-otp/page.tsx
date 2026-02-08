@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useAuthStore } from '@/store/authStore';
 
 const otpSchema = z.object({
     otp: z.string().length(6, 'OTP must be 6 digits'),
@@ -20,6 +21,7 @@ function VerifyOtpContent() {
     const searchParams = useSearchParams();
     const email = searchParams.get('email');
     const [error, setError] = useState('');
+    const { setAuth } = useAuthStore();
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<OtpFormData>({
         resolver: zodResolver(otpSchema),
     });
@@ -35,8 +37,11 @@ function VerifyOtpContent() {
                 email,
                 otp: data.otp,
             });
-            // localStorage.setItem('token', response.data.access_token);
-            // localStorage.setItem('user', JSON.stringify(response.data.user));
+
+            // Save auth state to cookies
+            const { access_token, user } = response.data;
+            setAuth(access_token, user);
+
             router.push('/');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Verification failed');

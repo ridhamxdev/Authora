@@ -5,8 +5,11 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { EmailModule } from './email/email.module';
-import { ProductsModule } from './products/products.module';
-import { OrdersModule } from './orders/orders.module';
+import { ScraperModule } from './scraper/scraper.module';
+import { RagModule } from './rag/rag.module';
+import { WishlistsModule } from './wishlists/wishlists.module';
+import { NotesModule } from './notes/notes.module';
+import { PreferencesModule } from './preferences/preferences.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
@@ -19,8 +22,11 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     UsersModule,
     AuthModule,
     EmailModule,
-    ProductsModule,
-    OrdersModule,
+    ScraperModule,
+    RagModule,
+    WishlistsModule,
+    NotesModule,
+    PreferencesModule,
     CloudinaryModule,
   ],
   controllers: [AppController],
