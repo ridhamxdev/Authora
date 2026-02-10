@@ -1,19 +1,28 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, Search } from 'lucide-react';
+import { Menu, Search, LogOut, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MagicButton } from '@/components/ui/magic-button';
 import { useState, useEffect } from 'react';
+import { useAuthStore } from '@/store/authStore';
+import { useRouter } from 'next/navigation';
 
 export default function AuthoraNavbar() {
     const [scrolled, setScrolled] = useState(false);
+    const { user, token, logout } = useAuthStore();
+    const router = useRouter();
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 20);
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    const handleLogout = () => {
+        logout();
+        router.push('/login');
+    };
 
     return (
         <nav
@@ -34,16 +43,34 @@ export default function AuthoraNavbar() {
             </div>
 
             <div className="flex items-center gap-6 text-white">
-                <div className="hidden md:flex items-center gap-4 mr-4">
-                    <Link href="/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
-                        Login
-                    </Link>
-                    <Link href="/register">
-                        <MagicButton className="h-8 px-4 text-xs">
-                            Sign Up
-                        </MagicButton>
-                    </Link>
-                </div>
+                {user && token ? (
+                    // Logged in state
+                    <div className="hidden md:flex items-center gap-4 mr-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-300">
+                            <User className="w-4 h-4" />
+                            <span>{user.name || user.email}</span>
+                        </div>
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Logout
+                        </button>
+                    </div>
+                ) : (
+                    // Logged out state
+                    <div className="hidden md:flex items-center gap-4 mr-4">
+                        <Link href="/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
+                            Login
+                        </Link>
+                        <Link href="/register">
+                            <MagicButton className="h-8 px-4 text-xs">
+                                Sign Up
+                            </MagicButton>
+                        </Link>
+                    </div>
+                )}
                 <button className="hover:text-gray-300">
                     <Search className="w-5 h-5" />
                 </button>

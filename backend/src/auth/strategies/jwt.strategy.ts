@@ -9,6 +9,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     constructor(configService: ConfigService) {
         super({
             jwtFromRequest: ExtractJwt.fromExtractors([
+                // First try Authorization header (Bearer token)
+                ExtractJwt.fromAuthHeaderAsBearerToken(),
+                // Then try cookie
                 (request: Request) => {
                     return request?.cookies?.Authentication;
                 },
@@ -19,6 +22,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: any) {
-        return { _id: payload.sub, email: payload.email, name: payload.name };
+        console.log('JWT Payload:', payload);
+        // Return userId to match what controllers expect
+        return {
+            userId: payload.sub,
+            _id: payload.sub,
+            email: payload.email,
+            name: payload.name
+        };
     }
 }

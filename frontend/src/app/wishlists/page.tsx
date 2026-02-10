@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
-import axios from 'axios';
+import api from '@/lib/api';
 import { Plus, Trash2 } from 'lucide-react';
 
 interface Wishlist {
@@ -16,28 +16,36 @@ interface Wishlist {
 
 export default function WishlistsPage() {
     const router = useRouter();
-    const { token } = useAuthStore();
+    const { token, initializeAuth } = useAuthStore();
     const [wishlists, setWishlists] = useState<Wishlist[]>([]);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [newWishlistName, setNewWishlistName] = useState('');
     const [newWishlistDesc, setNewWishlistDesc] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (!token) {
-            router.push('/login');
-            return;
+        // Initialize auth from localStorage first
+        initializeAuth();
+    }, []);
+
+    useEffect(() => {
+        // After auth is initialized, check if we have a token
+        if (isLoading) {
+            // Check localStorage directly for immediate auth check
+            const storedToken = localStorage.getItem('auth_token');
+            if (!storedToken) {
+                router.push('/login');
+                return;
+            }
+            setIsLoading(false);
+            fetchWishlists();
         }
-        fetchWishlists();
-    }, [token]);
+    }, [token, isLoading]);
 
     const fetchWishlists = async () => {
         try {
-            const response = await axios.get(
-                `${process.env.NEXT_PUBLIC_API_URL}/wishlists`,
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
+            // Use the api instance which has the auth interceptor
+            const response = await api.get('/wishlists');
             setWishlists(response.data);
         } catch (error) {
             console.error('Failed to fetch wishlists:', error);
@@ -46,11 +54,11 @@ export default function WishlistsPage() {
 
     const createWishlist = async () => {
         try {
-            await axios.post(
-                `${process.env.NEXT_PUBLIC_API_URL}/wishlists`,
-                { name: newWishlistName, description: newWishlistDesc },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            // Use the api instance which has the auth interceptor
+            await api.post('/wishlists', {
+                name: newWishlistName,
+                description: newWishlistDesc
+            });
             setShowCreateModal(false);
             setNewWishlistName('');
             setNewWishlistDesc('');

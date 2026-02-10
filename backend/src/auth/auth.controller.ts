@@ -13,16 +13,18 @@ export class AuthController {
         if (!user) {
             throw new BadRequestException('Invalid credentials');
         }
-        const { access_token, user: userData } = await this.authService.login(user);
+        const result = await this.authService.login(user);
 
-        res.cookie('Authentication', access_token, {
+        // Set HTTP-only cookie for additional security
+        res.cookie('Authentication', result.access_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             maxAge: 24 * 60 * 60 * 1000 // 1 day
         });
 
-        return userData;
+        // Return both access_token and user for frontend state management
+        return result;
     }
 
     @Post() // Matches POST /users (Register)
@@ -33,13 +35,17 @@ export class AuthController {
     @Post('verify-otp')
     async verifyOtp(@Body() body: any, @Res({ passthrough: true }) res: Response) {
         const result = await this.authService.verifyOtp(body.email, body.otp);
+
+        // Set HTTP-only cookie for additional security
         res.cookie('Authentication', result.access_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             maxAge: 24 * 60 * 60 * 1000 // 1 day
         });
-        return result.user;
+
+        // Return both access_token and user for frontend state management
+        return result;
     }
 
     @Post('logout')

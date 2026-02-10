@@ -30,15 +30,24 @@ export default function LoginPage() {
     const onSubmit = async (data: LoginFormData) => {
         try {
             setError('');
+            console.log('🚀 Attempting login...');
             const response = await api.post('/users/login', data);
+            console.log('📨 Login response:', response.data);
             const { access_token, user } = response.data;
 
             // Save auth state to cookies
+            console.log('💾 Calling setAuth with:', { access_token: access_token?.substring(0, 20) + '...', user });
             setAuth(access_token, user);
 
+            // Small delay to ensure cookies are written before redirect
+            console.log('⏳ Waiting for cookies to persist...');
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            console.log('🔄 Redirecting to home...');
             router.push('/');
         } catch (err: unknown) {
             const error = err as { response?: { data?: { message?: string } } };
+            console.error('❌ Login failed:', error);
             setError(error.response?.data?.message || 'Login failed');
         }
     };
